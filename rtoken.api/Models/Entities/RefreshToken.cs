@@ -8,8 +8,8 @@ namespace rtoken.api.Models.Entities
         public string CreatedByIp { get; set; }
         public DateTime ExpiresAt { get; set; }
         public DateTime? RevokedAt { get; set; }
-        public string? RevokedByIp { get; set; }
-        public string? ReasonRevoked { get; set; }
+        public string RevokedByIp { get; set; }
+        public string ReasonRevoked { get; set; }
         public string TokenSession { get; set; }
         public bool IsRevoked => RevokedAt == null ? false : true;
         public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
