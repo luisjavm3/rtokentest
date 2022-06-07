@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using rtoken.api.Data;
 using rtoken.api.Middlewares;
 using rtoken.api.Models.TokensManager;
+using rtoken.api.Services.AuthService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<IAccessTokenManager, AccessTokenManager>();
 builder.Services.AddScoped<IRefreshTokenManager, RefreshTokenManager>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
