@@ -1,7 +1,10 @@
+using rtoken.api.DTOs.Auth;
+using rtoken.api.Models;
+
 namespace rtoken.api.Services.AuthService
 {
-    public class IAuthService
+    public interface IAuthService
     {
-        
+        Task<ServiceResponse<RegisterResponse>> Register(AuthRequest request);
     }
 }
