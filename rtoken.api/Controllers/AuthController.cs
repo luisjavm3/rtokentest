@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using rtoken.api.DTOs.Auth;
 using rtoken.api.Services.AuthService;
@@ -17,15 +18,8 @@ namespace rtoken.api.Controllers
         [HttpPost("Register")]
         public async Task<ActionResult> Register(AuthRequest request)
         {
-            try
-            {
-                await _authService.Register(request);
-                return Ok();
-            }
-            catch (System.Exception)
-            {
-                return StatusCode(500);
-            }
+            await _authService.Register(request);
+            return Ok();
         }
     }
 }
