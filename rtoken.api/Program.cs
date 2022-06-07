@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using rtoken.api.Data;
 using rtoken.api.Middlewares;
+using rtoken.api.Models.TokensManager;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+
+builder.Services.AddScoped<IAccessTokenManager, AccessTokenManager>();
+builder.Services.AddScoped<IRefreshTokenManager, RefreshTokenManager>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
