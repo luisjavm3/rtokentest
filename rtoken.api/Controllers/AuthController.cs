@@ -26,7 +26,19 @@ namespace rtoken.api.Controllers
         public async Task<ActionResult> Login(AuthRequest request)
         {
             var result = await _authService.Login(request);
+            SetCookieOnClient(result.Data.RequestToken);
             return Ok(result);
+        }
+
+        private void SetCookieOnClient(string rTokenValue)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = DateTime.UtcNow.AddDays(1)
+            };
+
+            Response.Cookies.Append("refreshToken", rTokenValue, cookieOptions);
         }
     }
 }
