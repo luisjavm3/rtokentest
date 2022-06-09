@@ -21,5 +21,12 @@ namespace rtoken.api.Controllers
             await _authService.Register(request);
             return Ok();
         }
+
+        [HttpPost("Login")]
+        public async Task<ActionResult> Login(AuthRequest request)
+        {
+            var result = await _authService.Login(request);
+            return Ok(result);
+        }
     }
 }

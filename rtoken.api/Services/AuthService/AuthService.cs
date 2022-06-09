@@ -49,9 +49,9 @@ namespace rtoken.api.Services.AuthService
             var userIp = GetClientIp();
             var foundUser = await _context.Users
                                 .Include(u => u.RefreshTokens)
-                                .FirstOrDefaultAsync(u => u.Username.ToLower().Equals(request.Username));
+                                .FirstOrDefaultAsync(u => u.Username.ToLower().Equals(request.Username.ToLower()));
 
-            if (foundUser == null || PasswordUtils.MatchHashes(request.Password, foundUser.PasswordHash, foundUser.PasswordSalt))
+            if (foundUser == null || !PasswordUtils.MatchHashes(request.Password, foundUser.PasswordHash, foundUser.PasswordSalt))
                 throw new AppException("Wrong credentials.");
 
             var accessToken = _aTokenManager.GetAccessToken(foundUser.Id);
