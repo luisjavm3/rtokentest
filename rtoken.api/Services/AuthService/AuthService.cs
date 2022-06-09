@@ -11,11 +11,15 @@ namespace rtoken.api.Services.AuthService
     public class AuthService : IAuthService
     {
         private readonly DataContext _context;
+        private readonly IAccessTokenManager _aTokenManager;
         private readonly IRefreshTokenManager _rTokenManager;
-        public AuthService(DataContext context, IRefreshTokenManager rTokenManager)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public AuthService(DataContext context, IAccessTokenManager aTokenManager, IRefreshTokenManager rTokenManager, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _aTokenManager = aTokenManager;
             _rTokenManager = rTokenManager;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task Register(AuthRequest request)
@@ -49,9 +53,21 @@ namespace rtoken.api.Services.AuthService
             if (foundUser == null || PasswordUtils.MatchHashes(request.Password, foundUser.PasswordHash, foundUser.PasswordSalt))
                 throw new AppException("Wrong credentials.");
 
-
+            var accessToken = _aTokenManager.GetAccessToken(foundUser.Id);
+            var refreshToken = _rTokenManager.GetRefreshToken(GetClientIp());
 
             return response;
+        }
+
+        private string GetClientIp()
+        {
+            var ipComesInHeaders = _httpContextAccessor.HttpContext.Request.Headers.ContainsKey("X-Forwarded-For");
+
+            return ipComesInHeaders
+                ?
+                    _httpContextAccessor.HttpContext.Request.Headers["X-Forwarded-For"]
+                :
+                    _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
         }
     }
 }
