@@ -46,6 +46,7 @@ namespace rtoken.api.Services.AuthService
         public async Task<ServiceResponse<LoginResponse>> Login(AuthRequest request)
         {
             var response = new ServiceResponse<LoginResponse>();
+            var userIp = GetClientIp();
             var foundUser = await _context.Users
                                 .Include(u => u.RefreshTokens)
                                 .FirstOrDefaultAsync(u => u.Username.ToLower().Equals(request.Username));
@@ -54,7 +55,49 @@ namespace rtoken.api.Services.AuthService
                 throw new AppException("Wrong credentials.");
 
             var accessToken = _aTokenManager.GetAccessToken(foundUser.Id);
-            var refreshToken = _rTokenManager.GetRefreshToken(GetClientIp());
+            var refreshToken = await _rTokenManager.GetRefreshToken(userIp, foundUser);
+
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                // Saves refresh token
+                await _context.AddAsync(refreshToken);
+                // Selects all user's RefreshTokens
+                var userRToken2 = await _context.RefreshTokens
+                                        .Include(rt => rt.User)
+                                        .Where(rt => rt.User.Id == foundUser.Id)
+                                        .ToListAsync();
+
+                // First it revokes what it needs to. then removes.
+                foreach (var rToken in userRToken2)
+                {
+                    // Revokes all user's refresh-tokens that are not revoked until now.
+                    // It does not revoke the new one.
+                    if (!rToken.IsRevoked && !rToken.TokenSession.Equals(refreshToken.Value))
+                    {
+                        rToken.RevokedAt = DateTime.UtcNow;
+                        rToken.ReasonRevoked = "New Session Opened.";
+                        rToken.RevokedByIp = userIp;
+                    }
+
+                    // Deletes all expired refresh-tokens.
+                    if (rToken.IsExpired)
+                        _context.RefreshTokens.Remove(rToken);
+                }
+
+                await _context.SaveChangesAsync();
+                transaction.Commit();
+            }
+
+            // Arranges login-response DTO.
+            var loginResponse = new LoginResponse
+            {
+                Id = foundUser.Id,
+                Username = foundUser.Username,
+                AccessToken = accessToken,
+                RequestToken = refreshToken.Value
+            };
+
+            response.Data = loginResponse;
 
             return response;
         }

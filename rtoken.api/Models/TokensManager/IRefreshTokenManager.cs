@@ -4,6 +4,6 @@ namespace rtoken.api.Models.TokensManager
 {
     public interface IRefreshTokenManager
     {
-        Task<RefreshToken> GetRefreshToken(string createdByIp, string tokenSession = null);
+        Task<RefreshToken> GetRefreshToken(string createdByIp, User user, string tokenSession = null);
     }
 }

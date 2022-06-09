@@ -13,7 +13,7 @@ namespace rtoken.api.Models.TokensManager
             _context = context;
         }
 
-        public async Task<RefreshToken> GetRefreshToken(string createdByIp, string tokenSession = null)
+        public async Task<RefreshToken> GetRefreshToken(string createdByIp, User user, string tokenSession = null)
         {
             var value = await GetValue();
             tokenSession ??= value;
@@ -24,7 +24,8 @@ namespace rtoken.api.Models.TokensManager
             {
                 Value = value,
                 CreatedByIp = createdByIp,
-                TokenSession = tokenSession
+                TokenSession = tokenSession,
+                User = user
             };
 
             return rToken;
