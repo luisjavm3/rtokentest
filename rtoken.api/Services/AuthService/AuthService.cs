@@ -38,5 +38,20 @@ namespace rtoken.api.Services.AuthService
             await _context.AddAsync(user);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<ServiceResponse<LoginResponse>> Login(AuthRequest request)
+        {
+            var response = new ServiceResponse<LoginResponse>();
+            var foundUser = await _context.Users
+                                .Include(u => u.RefreshTokens)
+                                .FirstOrDefaultAsync(u => u.Username.ToLower().Equals(request.Username));
+
+            if (foundUser == null || PasswordUtils.MatchHashes(request.Password, foundUser.PasswordHash, foundUser.PasswordSalt))
+                throw new AppException("Wrong credentials.");
+
+
+
+            return response;
+        }
     }
 }
