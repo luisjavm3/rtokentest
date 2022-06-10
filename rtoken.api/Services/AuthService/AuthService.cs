@@ -113,11 +113,16 @@ namespace rtoken.api.Services.AuthService
             if (storedRToken == null)
                 throw new AppException("Invalid token.");
 
+            var userIp = GetClientIp();
+            var user = storedRToken.User;
+
             if (storedRToken.IsExpired && !storedRToken.IsRevoked)
             {
-                storedRToken.RevokedAt = DateTime.UtcNow;
-                storedRToken.ReasonRevoked = "User attempted to rotate a expired refresh-token.";
-                storedRToken.RevokedByIp = GetClientIp();
+                var reasonRevoked = "User attempted to rotate a expired refresh-token.";
+                _rTokenManager.RevokeToken(storedRToken, reasonRevoked, userIp);
+                // storedRToken.RevokedAt = DateTime.UtcNow;
+                // storedRToken.ReasonRevoked = "User attempted to rotate a expired refresh-token.";
+                // storedRToken.RevokedByIp = GetClientIp();
 
                 await _context.SaveChangesAsync();
                 throw new AppException("Token expired.");
@@ -132,9 +137,14 @@ namespace rtoken.api.Services.AuthService
 
                 foreach (var token in tokens)
                 {
-                    token.RevokedAt ??= DateTime.UtcNow;
-                    token.ReasonRevoked ??= "Someone attempted to rotate a revoked refresh-token.";
-                    token.RevokedByIp ??= GetClientIp();
+                    if (!token.IsRevoked)
+                    {
+                        var reasonRevoked = "Someone attempted to rotate a revoked refresh-token.";
+                        _rTokenManager.RevokeToken(storedRToken, reasonRevoked, userIp);
+                    }
+                    // token.RevokedAt ??= DateTime.UtcNow;
+                    // token.ReasonRevoked ??= "Someone attempted to rotate a revoked refresh-token.";
+                    // token.RevokedByIp ??= GetClientIp();
                 }
 
                 await _context.SaveChangesAsync();
@@ -142,16 +152,16 @@ namespace rtoken.api.Services.AuthService
             }
 
             // Arranges tokens
-            var userIp = GetClientIp();
-            var user = storedRToken.User;
             var tokenSession = storedRToken.TokenSession;
             var accessToken = _aTokenManager.GetAccessToken(user.Id);
             // Rotates tokens
             var refreshToken = await _rTokenManager.GetRefreshToken(userIp, user, tokenSession);
             await _context.RefreshTokens.AddAsync(refreshToken);
-            storedRToken.RevokedAt = DateTime.UtcNow;
-            storedRToken.ReasonRevoked = $"Rotated by {refreshToken.Value}";
-            storedRToken.RevokedByIp = userIp;
+
+            _rTokenManager.RevokeToken(storedRToken, $"Rotated by {refreshToken.Value}", userIp);
+            // storedRToken.RevokedAt = DateTime.UtcNow;
+            // storedRToken.ReasonRevoked = $"Rotated by {refreshToken.Value}";
+            // storedRToken.RevokedByIp = userIp;
 
             await _context.SaveChangesAsync();
 
