@@ -31,6 +31,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 builder.Services.AddScoped<IAccessTokenManager, AccessTokenManager>();
 builder.Services.AddScoped<IRefreshTokenManager, RefreshTokenManager>();
 builder.Services.AddScoped<IAuthService, AuthService>();
