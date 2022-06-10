@@ -59,6 +59,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<GlobalErrorHandler>();
+app.UseMiddleware<SetUser>();
 
 app.MapControllers();
 
