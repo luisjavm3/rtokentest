@@ -17,9 +17,16 @@ namespace rtoken.api.Middlewares
 
         public async Task Invoke(HttpContext context, DataContext dataContext, IMapper mapper)
         {
-            int userId = int.Parse(context.User.FindFirstValue(claimType: "id"));
-            User user = await dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            context.Items["User"] = mapper.Map<UserResponse>(user);
+            try
+            {
+                int userId = int.Parse(context.User.FindFirstValue(claimType: "id"));
+                User user = await dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                context.Items["User"] = mapper.Map<UserResponse>(user);
+            }
+            catch (System.Exception)
+            {
+                context.Items["User"] = null;
+            }
 
             await _next(context);
         }

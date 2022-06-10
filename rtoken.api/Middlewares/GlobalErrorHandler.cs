@@ -39,7 +39,7 @@ namespace rtoken.api.Middlewares
                         break;
                 }
 
-                var result = JsonSerializer.Serialize(new { message = error?.Message, success = false });
+                var result = JsonSerializer.Serialize(new { message = error?.Message, success = false, trace = error.StackTrace });
                 await response.WriteAsync(result);
             }
         }
