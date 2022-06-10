@@ -102,6 +102,11 @@ namespace rtoken.api.Services.AuthService
             return response;
         }
 
+        public async Task<string> RefreshToken(string rToken)
+        {
+            throw new NotImplementedException();
+        }
+
         private string GetClientIp()
         {
             var ipComesInHeaders = _httpContextAccessor.HttpContext.Request.Headers.ContainsKey("X-Forwarded-For");
