@@ -41,5 +41,12 @@ namespace rtoken.api.Models.TokensManager
                 return await GetValue();
             }
         }
+
+        public void RevokeToken(RefreshToken token, string reasonRevoked, string ip)
+        {
+            token.RevokedAt = DateTime.UtcNow;
+            token.ReasonRevoked = reasonRevoked;
+            token.RevokedByIp = ip;
+        }
     }
 }
