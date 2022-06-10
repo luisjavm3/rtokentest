@@ -103,41 +103,41 @@ namespace rtoken.api.Services.AuthService
             return response;
         }
 
-        public async Task<ServiceResponse<LoginResponse>> RefreshToken(string rToken)
+        public async Task<ServiceResponse<LoginResponse>> RefreshToken(string rTokenParam)
         {
             var response = new ServiceResponse<LoginResponse>();
-            var storedRToken = await _context.RefreshTokens
-                                .Include(rt => rt.User)
-                                .FirstOrDefaultAsync(rt => rt.Value.Equals(rToken));
+            var rToken = await _context.RefreshTokens
+                                .Include(t => t.User)
+                                .FirstOrDefaultAsync(t => t.Value.Equals(rTokenParam));
 
-            if (storedRToken == null)
+            if (rToken == null)
                 throw new AppException("Invalid token.");
 
             var userIp = GetClientIp();
-            var user = storedRToken.User;
+            var user = rToken.User;
 
-            if (storedRToken.IsExpired && !storedRToken.IsRevoked)
+            if (rToken.IsExpired && !rToken.IsRevoked)
             {
                 var reasonRevoked = "User attempted to rotate a expired refresh-token.";
-                _rTokenManager.RevokeToken(storedRToken, reasonRevoked, userIp);
+                _rTokenManager.RevokeToken(rToken, reasonRevoked, userIp);
 
                 await _context.SaveChangesAsync();
                 throw new AppException("Token expired.");
             }
 
             // Revokes all active tokens when attempting to rotate tokens with a revoked one.
-            if (storedRToken.IsRevoked)
+            if (rToken.IsRevoked)
             {
                 var tokens = await _context.RefreshTokens
                                 .Include(t => t.User)
-                                .Where(t => t.User.Id == storedRToken.User.Id).ToListAsync();
+                                .Where(t => t.User.Id == rToken.User.Id).ToListAsync();
 
                 foreach (var token in tokens)
                 {
                     if (!token.IsRevoked)
                     {
                         var reasonRevoked = "Someone attempted to rotate a revoked refresh-token.";
-                        _rTokenManager.RevokeToken(storedRToken, reasonRevoked, userIp);
+                        _rTokenManager.RevokeToken(rToken, reasonRevoked, userIp);
                     }
                 }
 
@@ -146,12 +146,12 @@ namespace rtoken.api.Services.AuthService
             }
 
             // Arranges tokens
-            var tokenSession = storedRToken.TokenSession;
+            var tokenSession = rToken.TokenSession;
             var accessToken = _aTokenManager.GetAccessToken(user.Id);
             // Rotates tokens
             var refreshToken = await _rTokenManager.GetRefreshToken(userIp, user, tokenSession);
             await _context.RefreshTokens.AddAsync(refreshToken);
-            _rTokenManager.RevokeToken(storedRToken, $"Rotated by {refreshToken.Value}", userIp);
+            _rTokenManager.RevokeToken(rToken, $"Rotated by {refreshToken.Value}", userIp);
 
             await _context.SaveChangesAsync();
 
