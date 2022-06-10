@@ -30,6 +30,19 @@ namespace rtoken.api.Controllers
             return Ok(result);
         }
 
+        [HttpPost("RefreshToken")]
+        public async Task<ActionResult> RefreshToken()
+        {
+            var rToken = Request.Cookies["refreshToken"];
+
+            if (rToken == null)
+                return BadRequest("No refresh-token provided.");
+
+            var result = await _authService.RefreshToken(rToken);
+            SetCookieOnClient(result.Data.RequestToken);
+            return Ok(result);
+        }
+
         private void SetCookieOnClient(string rTokenValue)
         {
             var cookieOptions = new CookieOptions

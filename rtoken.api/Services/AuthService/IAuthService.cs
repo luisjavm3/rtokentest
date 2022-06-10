@@ -7,6 +7,6 @@ namespace rtoken.api.Services.AuthService
     {
         Task Register(AuthRequest request);
         Task<ServiceResponse<LoginResponse>> Login(AuthRequest request);
-        Task<string> RefreshToken(string rToken);
+        Task<ServiceResponse<LoginResponse>> RefreshToken(string rToken);
     }
 }

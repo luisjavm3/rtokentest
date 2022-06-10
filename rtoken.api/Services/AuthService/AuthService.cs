@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using rtoken.api.Data;
 using rtoken.api.DTOs.Auth;
+using rtoken.api.DTOs.User;
 using rtoken.api.Models;
 using rtoken.api.Models.Entities;
 using rtoken.api.Models.TokensManager;
@@ -102,9 +103,69 @@ namespace rtoken.api.Services.AuthService
             return response;
         }
 
-        public async Task<string> RefreshToken(string rToken)
+        public async Task<ServiceResponse<LoginResponse>> RefreshToken(string rToken)
         {
-            throw new NotImplementedException();
+            var response = new ServiceResponse<LoginResponse>();
+            var storedRToken = await _context.RefreshTokens
+                                .Include(rt => rt.User)
+                                .FirstOrDefaultAsync(rt => rt.Value.Equals(rToken));
+
+            if (storedRToken == null)
+                throw new AppException("Invalid token.");
+
+            if (storedRToken.IsExpired && !storedRToken.IsRevoked)
+            {
+                storedRToken.RevokedAt = DateTime.UtcNow;
+                storedRToken.ReasonRevoked = "User attempted to rotate a expired refresh-token.";
+                storedRToken.RevokedByIp = GetClientIp();
+
+                await _context.SaveChangesAsync();
+                throw new AppException("Token expired.");
+            }
+
+            // Revokes all active tokens when attempting to rotate tokens with a revoked one.
+            if (storedRToken.IsRevoked)
+            {
+                var tokens = await _context.RefreshTokens
+                                .Include(t => t.User)
+                                .Where(t => t.User.Id == storedRToken.User.Id).ToListAsync();
+
+                foreach (var token in tokens)
+                {
+                    token.RevokedAt ??= DateTime.UtcNow;
+                    token.ReasonRevoked ??= "Someone attempted to rotate a revoked refresh-token.";
+                    token.RevokedByIp ??= GetClientIp();
+                }
+
+                await _context.SaveChangesAsync();
+                throw new AppException("Token revoked");
+            }
+
+            // Arranges tokens
+            var userIp = GetClientIp();
+            var user = storedRToken.User;
+            var tokenSession = storedRToken.TokenSession;
+            var accessToken = _aTokenManager.GetAccessToken(user.Id);
+            // Rotates tokens
+            var refreshToken = await _rTokenManager.GetRefreshToken(userIp, user, tokenSession);
+            await _context.RefreshTokens.AddAsync(refreshToken);
+            storedRToken.RevokedAt = DateTime.UtcNow;
+            storedRToken.ReasonRevoked = $"Rotated by {refreshToken.Value}";
+            storedRToken.RevokedByIp = userIp;
+
+            await _context.SaveChangesAsync();
+
+            // Arranges response
+            var data = new LoginResponse
+            {
+                Id = user.Id,
+                Username = user.Username,
+                AccessToken = accessToken,
+                RequestToken = refreshToken.Value
+            };
+            response.Data = data;
+
+            return response;
         }
 
         private string GetClientIp()
@@ -116,6 +177,15 @@ namespace rtoken.api.Services.AuthService
                     _httpContextAccessor.HttpContext.Request.Headers["X-Forwarded-For"]
                 :
                     _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+        }
+
+        private int UserId
+        {
+            get
+            {
+                var user = (UserResponse)_httpContextAccessor.HttpContext.Items["User"];
+                return user.Id;
+            }
         }
     }
 }
