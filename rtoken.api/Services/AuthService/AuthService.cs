@@ -63,26 +63,24 @@ namespace rtoken.api.Services.AuthService
                 // Saves refresh token
                 await _context.AddAsync(refreshToken);
                 // Selects all user's RefreshTokens
-                var userRToken2 = await _context.RefreshTokens
+                var tokens = await _context.RefreshTokens
                                         .Include(rt => rt.User)
                                         .Where(rt => rt.User.Id == foundUser.Id)
                                         .ToListAsync();
 
                 // First it revokes what it needs to. then removes.
-                foreach (var rToken in userRToken2)
+                foreach (var token in tokens)
                 {
                     // Revokes all user's refresh-tokens that are not revoked until now.
                     // It does not revoke the new one.
-                    if (!rToken.IsRevoked && !rToken.TokenSession.Equals(refreshToken.Value))
+                    if (!token.IsRevoked && !token.TokenSession.Equals(refreshToken.Value))
                     {
-                        rToken.RevokedAt = DateTime.UtcNow;
-                        rToken.ReasonRevoked = "New Session Opened.";
-                        rToken.RevokedByIp = userIp;
+                        _rTokenManager.RevokeToken(token, "New session opened.", userIp);
                     }
 
                     // Deletes all expired refresh-tokens.
-                    if (rToken.IsExpired)
-                        _context.RefreshTokens.Remove(rToken);
+                    if (token.IsExpired)
+                        _context.RefreshTokens.Remove(token);
                 }
 
                 await _context.SaveChangesAsync();
