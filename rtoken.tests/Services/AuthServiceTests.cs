@@ -14,7 +14,7 @@ namespace rtoken.tests.Services
     public class AuthServiceTests
     {
         [Fact]
-        public async void No_Name()
+        public async void RefreshToken_ThrowsAppException_WhenDoesNotFindARefreshToken()
         {
             // Arrange
             var dataContext = new Mock<DataContext>();
@@ -33,9 +33,6 @@ namespace rtoken.tests.Services
                             rTokenManager.Object,
                             httpContextAccessor.Object
                         );
-
-            // Act
-            // var actual = await sut.RefreshToken("refresh-token-value-6");
 
             // Assert
             await Assert.ThrowsAsync<AppException>(() => sut.RefreshToken("refresh-token-value-6"));
