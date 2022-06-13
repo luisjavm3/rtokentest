@@ -1,22 +1,45 @@
 using rtoken.api.Data;
 using Xunit;
 using Moq;
-using Microsoft.EntityFrameworkCore;
 using rtoken.api.Models.Entities;
-using System.Linq;
+using rtoken.tests.Helpers;
+using rtoken.tests.Fixtures;
+using rtoken.api.Services.AuthService;
+using rtoken.api.Models.TokensManager;
+using rtoken.api.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace rtoken.tests.Services
 {
     public class AuthServiceTests
     {
         [Fact]
-        public void No_Name()
+        public async void No_Name()
         {
-            var mockDbSet = new Mock<DbSet<RefreshToken>>();
-            mockDbSet.As<IQueryable<RefreshToken>>().Setup(m => m.Provider).Returns(data.Provider);
-            mockDbSet.As<IQueryable<RefreshToken>>().Setup(m => m.Expression).Returns(data.Expression);
-            mockDbSet.As<IQueryable<RefreshToken>>().Setup(m => m.ElementType).Returns(data.ElementType);
-            mockDbSet.As<IQueryable<RefreshToken>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
-            // }
+            // Arrange
+            var dataContext = new Mock<DataContext>();
+            var aTokenManage = new Mock<IAccessTokenManager>();
+            var rTokenManager = new Mock<IRefreshTokenManager>();
+            var httpContextAccessor = new Mock<IHttpContextAccessor>();
+
+            dataContext
+                .Setup(x => x.RefreshTokens)
+                .Returns(TestFunctions.GetDbSet<RefreshToken>(TestData.RefreshTokens).Object);
+
+            var sut = new AuthService
+                        (
+                            dataContext.Object,
+                            aTokenManage.Object,
+                            rTokenManager.Object,
+                            httpContextAccessor.Object
+                        );
+
+            // Act
+            // var actual = await sut.RefreshToken("refresh-token-value-6");
+
+            // Assert
+            await Assert.ThrowsAsync<AppException>(() => sut.RefreshToken("refresh-token-value-6"));
+
         }
     }
+}
