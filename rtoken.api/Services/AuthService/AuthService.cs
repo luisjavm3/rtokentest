@@ -166,6 +166,17 @@ namespace rtoken.api.Services.AuthService
             return response;
         }
 
+        public async Task RevokeRToken(string rTokenParam)
+        {
+            var rToken = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Value.Equals(rTokenParam));
+
+            if (rToken == null)
+                throw new AppException("Invalid token.");
+
+            _rTokenManager.RevokeToken(rToken, "Revoked by user.", GetClientIp());
+            await _context.SaveChangesAsync();
+        }
+
         private string GetClientIp()
         {
             var ipComesInHeaders = _httpContextAccessor.HttpContext.Request.Headers.ContainsKey("X-Forwarded-For");

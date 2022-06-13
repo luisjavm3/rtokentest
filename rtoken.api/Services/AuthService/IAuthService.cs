@@ -8,5 +8,6 @@ namespace rtoken.api.Services.AuthService
         Task Register(AuthRequest request);
         Task<ServiceResponse<LoginResponse>> Login(AuthRequest request);
         Task<ServiceResponse<LoginResponse>> RefreshToken(string rToken);
+        Task RevokeRToken(string rToken);
     }
 }
