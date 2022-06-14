@@ -140,7 +140,7 @@ namespace rtoken.api.Services.AuthService
                 }
 
                 await _context.SaveChangesAsync();
-                throw new AppException("Token revoked");
+                throw new AppException("Token revoked.");
             }
 
             // Arranges tokens
@@ -149,7 +149,7 @@ namespace rtoken.api.Services.AuthService
             // Rotates tokens
             var refreshToken = await _rTokenManager.GetRefreshToken(userIp, user, tokenSession);
             await _context.RefreshTokens.AddAsync(refreshToken);
-            _rTokenManager.RevokeToken(rToken, $"Rotated by {refreshToken.Value}", userIp);
+            _rTokenManager.RevokeToken(rToken, $"Rotated by {refreshToken.Value}.", userIp);
 
             await _context.SaveChangesAsync();
 

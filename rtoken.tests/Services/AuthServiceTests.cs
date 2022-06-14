@@ -8,13 +8,14 @@ using rtoken.api.Services.AuthService;
 using rtoken.api.Models.TokensManager;
 using rtoken.api.Models;
 using Microsoft.AspNetCore.Http;
+using FluentAssertions;
 
 namespace rtoken.tests.Services
 {
     public class AuthServiceTests
     {
         [Fact]
-        public async void RefreshToken_ThrowsAppException_WhenDoesNotFindARefreshToken()
+        public async void RefreshToken_ThrowsAppException_WhenNotFindingRefreshToken()
         {
             // Arrange
             var dataContext = new Mock<DataContext>();
@@ -35,8 +36,11 @@ namespace rtoken.tests.Services
                         );
 
             // Assert
-            await Assert.ThrowsAsync<AppException>(() => sut.RefreshToken("refresh-token-value-6"));
-
+            await sut
+                .Awaiting(x => x.RefreshToken("refresh-token-value-6"))
+                .Should()
+                .ThrowAsync<AppException>()
+                .WithMessage("Invalid token.");
         }
     }
 }
