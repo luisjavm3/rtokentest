@@ -6,6 +6,7 @@ namespace rtoken.api.Models.Entities
         public string Value { get; set; }
         public DateTime CreatedAt { get; } = DateTime.UtcNow;
         public string CreatedByIp { get; set; }
+        // ↓↓↓ ExpiresAt implements SET method for testing purposes only.
         public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddDays(1);
         public DateTime? RevokedAt { get; set; }
         public string RevokedByIp { get; set; }
