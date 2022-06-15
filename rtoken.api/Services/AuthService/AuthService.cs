@@ -116,7 +116,7 @@ namespace rtoken.api.Services.AuthService
 
             if (rToken.IsExpired && !rToken.IsRevoked)
             {
-                var reasonRevoked = "Refresh-token expired.";
+                var reasonRevoked = "Token expired.";
                 _rTokenManager.RevokeToken(rToken, reasonRevoked, userIp);
 
                 await _context.SaveChangesAsync();
